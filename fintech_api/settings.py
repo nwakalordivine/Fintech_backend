@@ -14,9 +14,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -103,12 +103,9 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT'),
         'OPTIONS': {
             'sslmode': 'require',
-            'options': '-c endpoint=ep-sweet-queen-a9elw1ia-pooler'
         },
     }
 }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
