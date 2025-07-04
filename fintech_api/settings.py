@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -93,13 +96,14 @@ WSGI_APPLICATION = "fintech_api.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'neondb',
-        'USER': 'neondb_owner',
-        'PASSWORD': 'npg_wTShE8J9ZgRt',
-        'HOST': 'ep-sweet-queen-a9elw1ia-pooler.gwc.azure.neon.tech',
-        'PORT': 5432,
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
         'OPTIONS': {
             'sslmode': 'require',
+            'options': '-c endpoint=ep-sweet-queen-a9elw1ia-pooler'
         },
     }
 }
@@ -178,7 +182,7 @@ DEFAULT_FROM_EMAIL = "FintechApp <divinenwakalor31@gmail.com>"
 EMAIL_HOST_PASSWORD = "digdzfndqcakwbzx"
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Fintech API',
+    'TITLE': 'FINTECH API',
     'DESCRIPTION': 'API documentation for Fintech project',
     'VERSION': '1.0.0',
     'CONTACT': {'email': 'your@email.com'},
