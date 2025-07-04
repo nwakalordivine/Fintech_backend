@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -57,6 +58,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "fintech_api.urls"
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 TEMPLATES = [
     {
@@ -163,6 +167,7 @@ simplejwt = {
 
 FRONTEND_URL = "http://localhost:3000"
 
+PASSWORD_RESET_TIMEOUT = 3600
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com" 
 EMAIL_PORT = 465
