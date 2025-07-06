@@ -1,14 +1,12 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from .models import SendEmail, User as CustomUser
-from .serializers import (
-    SendEmailSerializer, UserSerializer, CodeVerificationSerializer,
-    PasswordResetSerializer, PasswordResetConfirmSerializer,
-)
+from .serializers import SendEmailSerializer, UserSerializer, CodeVerificationSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from . import services
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+
 
 
 class SendEmailListCreateView(generics.GenericAPIView):
@@ -117,6 +115,11 @@ class RegisterCreateView(generics.GenericAPIView):
         SendEmail.objects.filter(email=user.email).delete()
         refresh = RefreshToken.for_user(user)
         return Response({
+            "firstname": user.firstname,
+            "lastname": user.lastname,
+            "email": user.email,
+            "phone_number": user.phone_number,
+            "image": user.image.url if user.image else None,
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }, status=status.HTTP_201_CREATED)
@@ -149,8 +152,8 @@ class PasswordResetConfirmView(APIView):
     @extend_schema(
         request=PasswordResetConfirmSerializer,
         parameters=[
-            OpenApiParameter('email', location=OpenApiParameter.PATH, type=str, description="User email"),
-            OpenApiParameter('token', location=OpenApiParameter.PATH, type=str, description="Password reset token"),
+            OpenApiParameter('id', location=OpenApiParameter.PATH, type=str, description="User id"),
+            OpenApiParameter('code', location=OpenApiParameter.PATH, type=str, description="Password reset code"),
         ],
         responses={
             status.HTTP_200_OK: None,
@@ -158,21 +161,28 @@ class PasswordResetConfirmView(APIView):
             status.HTTP_404_NOT_FOUND: None,
         }
     )
-    def post(self, request, email, token):
+    def post(self, request, id, code):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         new_password = serializer.validated_data["new_password"]
 
-        if not email or not token or not new_password:
+        if not id or not code or not new_password:
             return Response(
                 {"error": "Email, token, and new password are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:
-            password_changer = services.password_reset_confirm(email=email, token=token, new_password=new_password)
+            password_changer = services.password_reset_confirm(id=id, code=code, new_password=new_password)
             if password_changer == "success":
-                return Response({"message": "Password reset successfully."}, status=status.HTTP_200_OK)
+                 return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
             elif password_changer == "invalid":
-                return Response({"message": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid reset code."}, status=status.HTTP_400_BAD_REQUEST)
+            elif password_changer == "expired":
+                return Response({"error": "Reset code expired or not found."}, status=status.HTTP_400_BAD_REQUEST)
+            elif password_changer == "not_found":
+                return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            elif password_changer == "invalid_id":
+                return Response({"error": "Invalid user ID."}, status=status.HTTP_400_BAD_REQUEST)
+
         except CustomUser.DoesNotExist:
             return Response({"error": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)

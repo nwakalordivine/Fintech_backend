@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.timezone import now, timedelta
-
+from django.core.exceptions import ValidationError
+from cloudinary.models import CloudinaryField
 # Create your models here.
 
 class SendEmail(models.Model):
@@ -18,7 +19,7 @@ class SendEmail(models.Model):
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, firstname=None, lastname=None, password=None, phone_number=None, is_staff=False, is_admin=False, is_superuser=False):
+    def create_user(self, email, firstname=None, lastname=None, password=None, phone_number=None, image=None, is_staff=False, is_admin=False, is_superuser=False):
         if not email:
             raise ValueError('Users must have an email address')
         if not firstname or not lastname:
@@ -31,13 +32,14 @@ class CustomUserManager(BaseUserManager):
             phone_number=phone_number,
             is_staff=is_staff,
             is_admin=is_admin,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
+            image=image
         )
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, firstname, lastname, email, password=None, phone_number=None):
+    def create_superuser(self, firstname, lastname, email, image=None, password=None, phone_number=None):
         return self.create_user(
             firstname=firstname,
             lastname=lastname,
@@ -46,7 +48,8 @@ class CustomUserManager(BaseUserManager):
             phone_number=phone_number,
             is_staff=True,
             is_admin=True,
-            is_superuser=True
+            is_superuser=True,
+            image=image
         )
 
 
@@ -54,7 +57,8 @@ class User(AbstractBaseUser):
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    phone_number = models.CharField(max_length=11, unique=True, null=True, blank=True)
+    image = CloudinaryField(null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -76,5 +80,5 @@ class User(AbstractBaseUser):
 
     def save(self, *args, **kwargs):
         if self.phone_number and len(self.phone_number) != 11:
-            raise ValueError("Phone number must be 11 digits")
+            raise ValidationError("Phone number must be 11 digits")
         super(User, self).save(*args, **kwargs)

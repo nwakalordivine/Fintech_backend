@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'firstname', 'lastname', 'email', 'password', 'phone_number', 'is_staff', 'is_active']
+        fields = ['id', 'firstname', 'lastname', 'email', 'password', 'phone_number', 'image', 'is_staff', 'is_active']
         read_only_fields = ['id', 'is_staff', 'is_active']
 
     def validate_email(self, value):
@@ -50,15 +50,24 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
 
+    def validate_phone_number(self, value):
+        if value and len(value) != 11:
+            raise serializers.ValidationError("Phone number must be 11 digits.")
+        if CustomUser.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("user with this phone number already exists.")
+        return value
+    
     def create(self, validated_data):
         customuser = CustomUser.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             firstname=validated_data.get('firstname'),
             lastname=validated_data.get('lastname'),
-            phone_number=validated_data.get('phone_number')
+            phone_number=validated_data.get('phone_number'),
+            image=validated_data.get('image'),
         )
         return customuser
+
     
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -86,3 +95,14 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError("New password must be at least 8 characters long.")
 
         return attrs
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
+class TokenResponseSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+    access = serializers.CharField()
+
+class ErrorResponseSerializer(serializers.Serializer):
+    error = serializers.CharField()
