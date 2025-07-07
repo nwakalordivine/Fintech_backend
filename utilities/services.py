@@ -1,11 +1,11 @@
 import random
-from ..auth_system.models import SendEmail, User as CustomUser
+from auth_system.models import SendEmail, User as CustomUser
 from rest_framework.response import Response
 from django.core.mail import send_mail
 from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from ..auth_system.redis_client import redis
+from auth_system.redis_client import redis
 
 def generate_verification_code():
     return str(random.randint(1000, 9999))
@@ -37,19 +37,26 @@ def check_users(email):
         )
 
 def confirm_code(email, code):
+    if not email or not code:
+        return "required"
     try:
-        if not email or not code:
-            return "required"
         record = SendEmail.objects.get(email=email)
-        if record.is_expired():
-            return "expired"
-        if str(record.code) != str(code):
-            return "invalid"
-        record.is_verified = True
-        record.save()
-        return "success"
     except SendEmail.DoesNotExist:
         return "error"
+    if record.is_expired():
+        return "expired"
+    if str(record.code) != str(code):
+        return "invalid"
+    record.is_verified = True
+    record.save()
+    user = CustomUser.objects.filter(email=email).first()
+    if user:
+        user.is_verified = True
+        user.save()
+    record.delete()
+
+    return "success"
+
 
 def password_reset(email):
     user = get_object_or_404(CustomUser, email=email)

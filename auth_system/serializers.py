@@ -16,11 +16,6 @@ class SendEmailSerializer(serializers.ModelSerializer):
 class CodeVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField()
-
-    def validate_email(self, value):
-        if not value:
-            raise serializers.ValidationError("Email field cannot be empty.")
-        return value
     
     def validate_code(self, value):
         if not value:
@@ -32,6 +27,7 @@ class CodeVerificationSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    image = serializers.ImageField(required=False)
 
     class Meta:
         model = CustomUser
@@ -53,8 +49,11 @@ class UserSerializer(serializers.ModelSerializer):
     def validate_phone_number(self, value):
         if value and len(value) != 11:
             raise serializers.ValidationError("Phone number must be 11 digits.")
-        if CustomUser.objects.filter(phone_number=value).exists():
-            raise serializers.ValidationError("user with this phone number already exists.")
+        user_qs = CustomUser.objects.filter(phone_number=value)
+        if self.instance:
+            user_qs = user_qs.exclude(pk=self.instance.pk)
+        if user_qs.exists():
+            raise serializers.ValidationError("User with this phone number already exists.")
         return value
     
     def create(self, validated_data):

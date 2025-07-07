@@ -4,8 +4,8 @@ from .models import SendEmail, User as CustomUser
 from .serializers import SendEmailSerializer, UserSerializer, CodeVerificationSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from ..utilities import services
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from utilities import services
+from drf_spectacular.utils import extend_schema
 
 
 
@@ -36,31 +36,6 @@ class SendEmailListCreateView(generics.GenericAPIView):
         services.send_email(email=email, code=random_code)
         return Response({"message": "Verification code sent successfully."}, status=status.HTTP_200_OK)
     
-    
-class CheckEmailView(APIView):
-    @extend_schema(
-        request=None,
-        parameters=[
-            OpenApiParameter(
-                name='email',
-                location=OpenApiParameter.QUERY,
-                type=str,
-                required=True,
-                description='Email address to check if user exists'
-            )
-        ],
-        responses={
-            status.HTTP_200_OK: None,
-            status.HTTP_400_BAD_REQUEST: None,
-            status.HTTP_404_NOT_FOUND: None,
-        }
-    )
-    def get(self, request):
-        email = request.query_params.get("email")
-        if not email:
-            return Response({"error": "Email query param is required."}, status=status.HTTP_400_BAD_REQUEST)
-        return services.check_users(email=email)
-
 
 class CodeVerificationView(generics.GenericAPIView):
     queryset = SendEmail.objects.all()
@@ -115,6 +90,7 @@ class RegisterCreateView(generics.GenericAPIView):
             "email": user.email,
             "phone_number": user.phone_number,
             "image": user.image.url if user.image else None,
+            'is_verified': user.is_verified,
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }, status=status.HTTP_201_CREATED)

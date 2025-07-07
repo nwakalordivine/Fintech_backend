@@ -19,7 +19,7 @@ class SendEmail(models.Model):
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, firstname=None, lastname=None, password=None, phone_number=None, image=None, is_staff=False, is_admin=False, is_superuser=False):
+    def create_user(self, email, firstname=None, lastname=None, password=None, phone_number=None, image=None, is_staff=False, is_admin=False, is_superuser=False, is_verified=False):
         if not email:
             raise ValueError('Users must have an email address')
         if not firstname or not lastname:
@@ -33,7 +33,8 @@ class CustomUserManager(BaseUserManager):
             is_staff=is_staff,
             is_admin=is_admin,
             is_superuser=is_superuser,
-            image=image
+            image=image,
+            is_verified=is_verified
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -46,6 +47,7 @@ class CustomUserManager(BaseUserManager):
             email=email,
             password=password,
             phone_number=phone_number,
+            is_verified=True,
             is_staff=True,
             is_admin=True,
             is_superuser=True,
@@ -59,6 +61,7 @@ class User(AbstractBaseUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=11, unique=True, null=True, blank=True)
     image = CloudinaryField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
