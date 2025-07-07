@@ -143,7 +143,7 @@ class PasswordResetView(APIView):
             services.password_reset(email=email)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response({"message": "Password reset link sent."}, status=status.HTTP_200_OK)
+        return Response({"message": "Password reset code sent."}, status=status.HTTP_200_OK)
 
 
 class PasswordResetConfirmView(APIView):
@@ -166,7 +166,7 @@ class PasswordResetConfirmView(APIView):
 
         if not email or not code or not new_password:
             return Response(
-                {"error": "Email, code, and new password are required."}, 
+                {"error": "email, code, and new password are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:

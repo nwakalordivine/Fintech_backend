@@ -64,7 +64,7 @@ def password_reset(email):
             [user.email],
         )
     except Exception as e:
-        raise Exception(f"Email sending failed: {str(e)}")
+        raise Exception(f"email sending failed: {str(e)}")
     return "success"
 
 def password_reset_confirm(email, code, new_password):
