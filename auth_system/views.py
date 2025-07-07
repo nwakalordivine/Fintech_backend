@@ -4,7 +4,7 @@ from .models import SendEmail, User as CustomUser
 from .serializers import SendEmailSerializer, UserSerializer, CodeVerificationSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from . import services
+from ..utilities import services
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 
@@ -106,11 +106,6 @@ class RegisterCreateView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data.get("email")
-        record = SendEmail.objects.filter(email=email, is_verified=True).first()
-        if not record:
-            return Response({"error": "Email not verified."}, status=status.HTTP_400_BAD_REQUEST)
-
         user = serializer.save()
         SendEmail.objects.filter(email=user.email).delete()
         refresh = RefreshToken.for_user(user)

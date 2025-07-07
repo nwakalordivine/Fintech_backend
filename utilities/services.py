@@ -1,11 +1,11 @@
 import random
-from .models import SendEmail, User as CustomUser
+from ..auth_system.models import SendEmail, User as CustomUser
 from rest_framework.response import Response
 from django.core.mail import send_mail
 from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from .redis_client import redis
+from ..auth_system.redis_client import redis
 
 def generate_verification_code():
     return str(random.randint(1000, 9999))
