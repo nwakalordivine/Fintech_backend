@@ -78,13 +78,15 @@ class PasswordResetSerializer(serializers.Serializer):
         return value
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.CharField(write_only=True)
+    code = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
         new_password = attrs['new_password']
         confirm_password = attrs['confirm_password']
-
+        code = attrs['code']
         if not new_password or not confirm_password:
             raise serializers.ValidationError("Both password fields are required.")
 
@@ -93,7 +95,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
         if len(new_password) < 8:
             raise serializers.ValidationError("New password must be at least 8 characters long.")
-
+        if not code.isdigit() or len(code) != 5:
+            raise serializers.ValidationError("Code must be a 5-digit number.")
         return attrs
 
 class LoginSerializer(serializers.Serializer):

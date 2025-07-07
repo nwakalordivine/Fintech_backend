@@ -54,12 +54,12 @@ def confirm_code(email, code):
 def password_reset(email):
     user = get_object_or_404(CustomUser, email=email)
     code = generate_code()
-    redis.set(f"reset:{user.id}", code, ex=600)  # 10 minutes TTL
-    reset_url = f"{settings.FRONTEND_URL}/reset-password?id={user.id}&code={code}"
+    redis.set(f"reset:{user.email}", code, ex=600)  # 10 minutes TTL
+    reset = f"your reset code is: \n{code}"
     try:
         send_mail(
             "Password Reset",
-            f"Hello\nClick the link to reset your password:\n {reset_url}",
+            f"Hello\n{reset}",
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
         )
@@ -67,21 +67,17 @@ def password_reset(email):
         raise Exception(f"Email sending failed: {str(e)}")
     return "success"
 
-def password_reset_confirm(id, code, new_password):
-    try:
-        id = int(id)
-    except ValueError:
-        return "invalid_id"
-    stored_code = redis.get(f"reset:{id}")
+def password_reset_confirm(email, code, new_password):
+    stored_code = redis.get(f"reset:{email}")
     if stored_code is None:
         return "expired"
     if stored_code != code:
         return "invalid"
     try:
-        user = CustomUser.objects.get(id=id)
+        user = CustomUser.objects.get(email=email)
         user.set_password(new_password)
         user.save()
-        redis.delete(f"reset:{id}")
+        redis.delete(f"reset:{email}")
         return "success"
     except CustomUser.DoesNotExist:
         return "not_found"

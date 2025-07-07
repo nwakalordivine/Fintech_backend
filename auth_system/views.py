@@ -151,28 +151,26 @@ class PasswordResetConfirmView(APIView):
 
     @extend_schema(
         request=PasswordResetConfirmSerializer,
-        parameters=[
-            OpenApiParameter('id', location=OpenApiParameter.PATH, type=str, description="User id"),
-            OpenApiParameter('code', location=OpenApiParameter.PATH, type=str, description="Password reset code"),
-        ],
         responses={
             status.HTTP_200_OK: None,
             status.HTTP_400_BAD_REQUEST: None,
             status.HTTP_404_NOT_FOUND: None,
         }
     )
-    def post(self, request, id, code):
+    def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         new_password = serializer.validated_data["new_password"]
+        email = serializer.validated_data.get("email")
+        code = serializer.validated_data.get("code")
 
-        if not id or not code or not new_password:
+        if not email or not code or not new_password:
             return Response(
-                {"error": "Email, token, and new password are required."}, 
+                {"error": "Email, code, and new password are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:
-            password_changer = services.password_reset_confirm(id=id, code=code, new_password=new_password)
+            password_changer = services.password_reset_confirm(email=email, code=code, new_password=new_password)
             if password_changer == "success":
                  return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
             elif password_changer == "invalid":
@@ -182,7 +180,7 @@ class PasswordResetConfirmView(APIView):
             elif password_changer == "not_found":
                 return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
             elif password_changer == "invalid_id":
-                return Response({"error": "Invalid user ID."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid email."}, status=status.HTTP_400_BAD_REQUEST)
 
         except CustomUser.DoesNotExist:
             return Response({"error": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
