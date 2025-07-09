@@ -84,16 +84,19 @@ class RegisterCreateView(generics.GenericAPIView):
         user = serializer.save()
         SendEmail.objects.filter(email=user.email).delete()
         refresh = RefreshToken.for_user(user)
+        data = serializer.data
+
         return Response({
-            "firstname": user.firstname,
-            "lastname": user.lastname,
-            "email": user.email,
-            "phone_number": user.phone_number,
-            "image": user.image.url if user.image else None,
-            'is_verified': user.is_verified,
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
+            **data,
+            "tokens": {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
         }, status=status.HTTP_201_CREATED)
+    
+
+
+
     
 
 class PasswordResetView(APIView):

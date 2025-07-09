@@ -85,3 +85,10 @@ class User(AbstractBaseUser):
         if self.phone_number and len(self.phone_number) != 11:
             raise ValidationError("Phone number must be 11 digits")
         super(User, self).save(*args, **kwargs)
+
+class Wallet(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.user.email} Wallet - ₦{self.balance}"

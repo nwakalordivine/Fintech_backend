@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'cloudinary',
+    'userprofile.apps.UserprofileConfig',
 ]
 
 MIDDLEWARE = [
@@ -200,3 +201,6 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False
 }
 
+MONNIFY_API_KEY = os.getenv("MONNIFY_API_KEY")
+MONNIFY_SECRET_KEY = os.getenv("MONNIFY_SECRET_KEY")
+MONNIFY_CONTRACT_CODE = os.getenv("MONNIFY_CONTRACT_CODE")
