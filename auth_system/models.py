@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.timezone import now, timedelta
 from django.core.exceptions import ValidationError
-from cloudinary.models import CloudinaryField
 # Create your models here.
 
 class SendEmail(models.Model):
@@ -60,12 +59,14 @@ class User(AbstractBaseUser):
     lastname = models.CharField(max_length=30)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=11, unique=True, null=True, blank=True)
-    image = CloudinaryField(null=True, blank=True)
+    image = models.URLField(max_length=1000, null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     is_verified = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+
 
     objects = CustomUserManager()
 
@@ -86,9 +87,19 @@ class User(AbstractBaseUser):
             raise ValidationError("Phone number must be 11 digits")
         super(User, self).save(*args, **kwargs)
 
+TIER_CHOICES = [
+        ('tier 1', 'Tier 1'),
+        ('tier 2', 'Tier 2'),
+        ('tier 3', 'Tier 3'),
+    ]
 class Wallet(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wallet')
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-
+    monnify_account_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    monnify_bank_name = models.CharField(max_length=100, blank=True, null=True)
+    bank_user_name = models.CharField(max_length=100, blank=True, null=True)
+    tier = models.CharField(max_length=10, choices=TIER_CHOICES, default='Tier 1')
+    accountreference = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    
     def __str__(self):
         return f"{self.user.email} Wallet - ₦{self.balance}"

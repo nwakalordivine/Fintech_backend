@@ -4,15 +4,15 @@ from .models import User, Wallet
 # Register your models here.
 
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ('email', 'firstname', 'lastname', 'phone_number', 'is_verified', 'is_staff')
+    list_display = ('id', 'email', 'firstname', 'lastname', 'phone_number', 'image', 'is_verified', 'is_staff')
     search_fields = ('email', 'firstname', 'lastname')
     list_filter = ('is_staff',)
-    ordering = ('email',)
+    ordering = ('id',)
     
 
 class WalletAdmin(admin.ModelAdmin):
-    list_display = ('user_email', 'balance')
-    search_fields = ('user__email', 'user__firstname', 'user__lastname')
+    list_display = ('user_email', 'balance', 'monnify_account_number', 'monnify_bank_name', 'bank_user_name', 'tier')
+    search_fields = ('user__email', 'user__firstname', 'user__lastname', 'monnify_account_number')
     list_filter = ('user__firstname',)
     ordering = ('user__email',)
 

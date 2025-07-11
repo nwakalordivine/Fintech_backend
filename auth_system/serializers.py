@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import SendEmail
 from django.contrib.auth import get_user_model
+from utilities.cloudinary_helper import upload_image_to_cloudinary
+
 CustomUser = get_user_model()
 
 class SendEmailSerializer(serializers.ModelSerializer):
@@ -28,14 +30,11 @@ class CodeVerificationSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    image = serializers.ImageField(required=False)
-    user_tier = serializers.CharField(source='profile.tier', read_only=True)
-    wallet_balance = serializers.SerializerMethodField()
-
+    image = serializers.ImageField(write_only=True, required=False)
     class Meta:
         model = CustomUser
-        fields = ['id', 'firstname', 'lastname', 'email', 'password', 'phone_number', 'image', 'is_staff', 'is_active', 'user_tier', 'wallet_balance']
-        read_only_fields = ['id', 'is_staff', 'is_active', 'user_tier', 'wallet_balance']
+        fields = ['id', 'firstname', 'lastname', 'email', 'password', 'phone_number', 'image', 'is_admin', 'is_verified', 'date_of_birth']
+        read_only_fields = ['id', 'is_staff', 'is_admin']
 
     def validate_email(self, value):
         if not value:
@@ -60,14 +59,22 @@ class UserSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
+        image_file = validated_data.get('image', None)
+        if image_file:
+            image_url = upload_image_to_cloudinary(image_file, folder_name="fintechapp_user_images")
+            validated_data['image'] = image_url
         customuser = CustomUser.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
-            firstname=validated_data.get('firstname'),
-            lastname=validated_data.get('lastname'),
+            firstname=validated_data.get('firstname').title(),
+            lastname=validated_data.get('lastname').title(),
             phone_number=validated_data.get('phone_number'),
             image=validated_data.get('image'),
         )
+
+        from .models import Wallet
+        if not hasattr(customuser, 'wallet'):
+            Wallet.objects.create(user=customuser)
         return customuser
 
     def get_wallet_balance(self, obj):
@@ -78,14 +85,18 @@ class UserSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         rep = super().to_representation(instance)
-        profile = getattr(instance, 'profile', None)
-        rep["monnify_account_details"] = {
-            "monnify_account_number": profile.monnify_account_number if profile else None,
-            "monnify_bank_name": profile.monnify_bank_name if profile else None,
-            "bank_user_name": profile.bank_user_name if profile else None
-        }
-        rep["user_tier"] = profile.tier if profile else None
-        return rep
+        wallet = getattr(instance, 'wallet', None)
+        if wallet:
+            rep["image"] = instance.image
+            rep["account_details"] = {
+                "monnify_account_number": wallet.monnify_account_number if wallet else None,
+                "monnify_bank_name": wallet.monnify_bank_name if wallet else None,
+                "bank_user_name": wallet.bank_user_name if wallet else None,
+                "account_reference": wallet.accountreference if wallet else None,
+                "tier": wallet.tier if wallet else None,
+                "wallet_balance": "{:.2f}".format(wallet.balance) if wallet else "0.00"
+            }
+            return rep
 
     
 class PasswordResetSerializer(serializers.Serializer):

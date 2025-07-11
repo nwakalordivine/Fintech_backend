@@ -6,6 +6,8 @@ from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from auth_system.redis_client import redis
+from utilities.monnify_helper import get_monnify_token
+import requests
 
 def generate_verification_code():
     return str(random.randint(1000, 9999))
@@ -49,13 +51,15 @@ def confirm_code(email, code):
         return "invalid"
     record.is_verified = True
     record.save()
-    user = CustomUser.objects.filter(email=email).first()
-    if user:
+    try:
+        user = CustomUser.objects.get(email=email)
         user.is_verified = True
         user.save()
-    record.delete()
+        record.delete()
+        return "success"
+    except CustomUser.DoesNotExist:
+        return "error"
 
-    return "success"
 
 
 def password_reset(email):
@@ -88,3 +92,33 @@ def password_reset_confirm(email, code, new_password):
         return "success"
     except CustomUser.DoesNotExist:
         return "not_found"
+
+def create_reserved_account(user):
+    token = get_monnify_token()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "accountReference": f"user_{user.id}",
+        "accountName": f"{user.firstname.title()} {user.lastname.title()}",
+        "currencyCode": "NGN",
+        "contractCode": settings.MONNIFY_CONTRACT_CODE,
+        "customerEmail": user.email,
+        "customerName": f"{user.firstname} {user.lastname}"
+    }
+    res = requests.post(
+        f"{settings.MONNIFY_BASE_URL}/bank-transfer/reserved-accounts",
+        json=data,
+        headers=headers
+    )
+    if res.status_code == 200:
+          return res.json()['responseBody']
+    print("Monnify Error Response:", res.text)
+    raise Exception("Monnify account creation failed")
+
+# def transaction(recipient, sender, amount, transaction_reference):
+#     try:
+#         recipient_user = Wallet.objects.get(monnify_account_number=recipient)
+#         sender_user = Wallet.objects.get(id=sender)
+#         amount = 

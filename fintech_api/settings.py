@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "auth_system",
+    "auth_system.apps.AuthSystemConfig",
     "rest_framework",
     'corsheaders',
     'rest_framework_simplejwt',
@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'cloudinary',
-    'userprofile.apps.UserprofileConfig',
+    'userprofile',
+    'operations',
 ]
 
 MIDDLEWARE = [
@@ -175,7 +176,7 @@ cloudinary.config(
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -184,14 +185,14 @@ SIMPLE_JWT = {
 FRONTEND_URL = "http://localhost:3000"
 
 PASSWORD_RESET_TIMEOUT = 3600
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com" 
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
+EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = "divinenwakalor31@gmail.com"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_USE_TLS = False  
-DEFAULT_FROM_EMAIL = "FintechApp <divinenwakalor31@gmail.com>"
-EMAIL_HOST_PASSWORD = "digdzfndqcakwbzx"
+DEFAULT_FROM_EMAIL =os.getenv("DEFAULT_FROM_EMAIL")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'FINTECH API',
@@ -204,3 +205,4 @@ SPECTACULAR_SETTINGS = {
 MONNIFY_API_KEY = os.getenv("MONNIFY_API_KEY")
 MONNIFY_SECRET_KEY = os.getenv("MONNIFY_SECRET_KEY")
 MONNIFY_CONTRACT_CODE = os.getenv("MONNIFY_CONTRACT_CODE")
+MONNIFY_BASE_URL = os.getenv("MONNIFY_BASE_URL")
