@@ -174,6 +174,12 @@ cloudinary.config(
     secure=True
 )
 
+TIER_RULES = {
+    "tier 1": {"daily_inflow": 50000, "daily_outflow": 50000, "max_balance": 300000},
+    "tier 2": {"daily_inflow": 200000, "daily_outflow": 200000, "max_balance": 1000000},
+    "tier 3": {"daily_inflow": 500000, "daily_outflow": 500000, "max_balance": 5000000},
+}
+
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),

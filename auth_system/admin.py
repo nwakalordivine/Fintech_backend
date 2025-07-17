@@ -4,7 +4,7 @@ from .models import User, Wallet
 # Register your models here.
 
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'email', 'firstname', 'lastname', 'phone_number', 'image', 'is_verified', 'is_staff')
+    list_display = ('id', 'email', 'firstname', 'lastname', 'phone_number', 'image', 'nickname', 'is_staff')
     search_fields = ('email', 'firstname', 'lastname')
     list_filter = ('is_staff',)
     ordering = ('id',)

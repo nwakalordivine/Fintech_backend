@@ -1,72 +1,16 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.views import APIView
-from .models import SendEmail, User as CustomUser
-from .serializers import SendEmailSerializer, UserSerializer, CodeVerificationSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
+from .models import User as CustomUser
+from .serializers import UserSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, UserUpdateSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from utilities import services
 from drf_spectacular.utils import extend_schema
 
-
-
-class SendEmailListCreateView(generics.GenericAPIView):
-    queryset = SendEmail.objects.all()
-    serializer_class = SendEmailSerializer
-
-    @extend_schema(
-        request=SendEmailSerializer,
-        responses={
-            status.HTTP_200_OK: None,
-            status.HTTP_429_TOO_MANY_REQUESTS: None,
-            status.HTTP_400_BAD_REQUEST: None,
-        }
-    )
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data['email']
-
-        random_code = services.generate_verification_code()
-        existing = SendEmail.objects.filter(email=email).first()
-        if existing and not existing.is_expired():
-            return Response(
-                {"message": "A verification code has already been sent. Please wait before requesting a new one."},
-                status=status.HTTP_429_TOO_MANY_REQUESTS
-            )
-        services.send_email(email=email, code=random_code)
-        return Response({"message": "Verification code sent successfully."}, status=status.HTTP_200_OK)
+class IsOwnerOrAdmin(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj == request.user or request.user.is_admin
     
-
-class CodeVerificationView(generics.GenericAPIView):
-    queryset = SendEmail.objects.all()
-    serializer_class = CodeVerificationSerializer
-
-    @extend_schema(
-        request=CodeVerificationSerializer,
-        responses={
-            status.HTTP_200_OK: None,
-            status.HTTP_400_BAD_REQUEST: None,
-        }
-    )
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data['email']
-        code = serializer.validated_data['code']
-        checker = services.confirm_code(email=email, code=code)
-        messages = {
-            "required": "Email and code are required.", 
-            "expired": "Verification code has expired.", 
-            "invalid": "Invalid verification code.", 
-            "success": "Code verified successfully.", 
-            "error": "Invalid email or code."
-        }
-        return Response(
-            {"message": messages[checker]},
-            status=status.HTTP_200_OK if checker == "success" else status.HTTP_400_BAD_REQUEST
-        )
-        
-
 class RegisterCreateView(generics.GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
@@ -93,11 +37,6 @@ class RegisterCreateView(generics.GenericAPIView):
             }
         }, status=status.HTTP_201_CREATED)
     
-
-
-
-    
-
 class PasswordResetView(APIView):
     serializer_class = PasswordResetSerializer
 
@@ -117,7 +56,6 @@ class PasswordResetView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({"message": "Password reset code sent."}, status=status.HTTP_200_OK)
-
 
 class PasswordResetConfirmView(APIView):
     serializer_class = PasswordResetConfirmSerializer
@@ -157,3 +95,17 @@ class PasswordResetConfirmView(APIView):
 
         except CustomUser.DoesNotExist:
             return Response({"error": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+class UserUpdateView(generics.UpdateAPIView):
+    serializer_class = UserUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+class UserProfileView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsOwnerOrAdmin]
+
+    def get_object(self):
+        return self.request.user

@@ -1,44 +1,35 @@
 from rest_framework import serializers
-from .models import SendEmail
 from django.contrib.auth import get_user_model
-from utilities.cloudinary_helper import upload_image_to_cloudinary
+from utilities.cloudinary_helper import upload_to_cloudinary
+from datetime import date
 
 CustomUser = get_user_model()
-
-class SendEmailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SendEmail
-        fields = ['id', 'email', 'created_at']
-        read_only_fields = ['id', 'created_at']
-
-    def validate_email(self, value):
-        if not value:
-            raise serializers.ValidationError("Email field cannot be empty.")
-        return value
-    
-class CodeVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    code = serializers.CharField()
-    
-    def validate_code(self, value):
-        if not value:
-            raise serializers.ValidationError("Code field cannot be empty.")
-        if not value.isdigit() or len(value) != 4:
-            raise serializers.ValidationError("Code must be a 4-digit number.")
-        return value
-
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     image = serializers.ImageField(write_only=True, required=False)
+    date_of_birth = serializers.DateField(required=True)
+
     class Meta:
         model = CustomUser
-        fields = ['id', 'firstname', 'lastname', 'email', 'password', 'phone_number', 'image', 'is_admin', 'is_verified', 'date_of_birth']
+        fields = ['id', 'firstname', 'lastname', 'nickname', 'email', 'password', 'phone_number', 'image', 'is_admin', 'date_of_birth']
         read_only_fields = ['id', 'is_staff', 'is_admin']
 
     def validate_email(self, value):
         if not value:
             raise serializers.ValidationError("Email field cannot be empty.")
+        return value
+    
+    def validate_date_of_birth(self, value):
+        if value is None:
+            raise serializers.ValidationError("Date of birth is required.")
+        
+        today = date.today()
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        
+        if age < 17:
+            raise serializers.ValidationError("You must be at least 17 years old to register.")
+        
         return value
 
     def validate_password(self, value):
@@ -61,7 +52,7 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         image_file = validated_data.get('image', None)
         if image_file:
-            image_url = upload_image_to_cloudinary(image_file, folder_name="fintechapp_user_images")
+            image_url = upload_to_cloudinary(image_file, folder_name="fintechapp_user_images")
             validated_data['image'] = image_url
         customuser = CustomUser.objects.create_user(
             email=validated_data['email'],
@@ -70,6 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
             lastname=validated_data.get('lastname').title(),
             phone_number=validated_data.get('phone_number'),
             image=validated_data.get('image'),
+            date_of_birth=validated_data.get('date_of_birth'),
         )
 
         from .models import Wallet
@@ -97,6 +89,33 @@ class UserSerializer(serializers.ModelSerializer):
                 "wallet_balance": "{:.2f}".format(wallet.balance) if wallet else "0.00"
             }
             return rep
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+    phone_number = serializers.CharField(required=False)
+
+    class Meta:
+        model = CustomUser
+        fields = ['nickname', 'image', 'phone_number']
+
+    def validate_phone_number(self, value):
+        user = self.context['request'].user
+        if CustomUser.objects.filter(phone_number=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("Phone number already in use.")
+        return value
+
+    def update(self, instance, validated_data):
+        image_file = validated_data.get('image')
+        if image_file:
+            from utilities.cloudinary_helper import upload_to_cloudinary
+            image_url = upload_to_cloudinary(image_file, folder_name="fintechapp_user_images")
+            instance.image = image_url
+
+        instance.nickname = validated_data.get('nickname', instance.nickname)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.save()
+        return instance
 
     
 class PasswordResetSerializer(serializers.Serializer):
@@ -128,6 +147,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if not code.isdigit() or len(code) != 5:
             raise serializers.ValidationError("Code must be a 5-digit number.")
         return attrs
+
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
