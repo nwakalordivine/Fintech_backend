@@ -8,6 +8,14 @@
   ],
   "routes": [
     {
+      "src": "/api/fund/webhook/",
+      "dest": "fintech_api/wsgi.py"
+    },
+    {
+      "src": "/api/transfer/webhook/",
+      "dest": "fintech_api/wsgi.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "fintech_api/wsgi.py"
     }
