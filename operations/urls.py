@@ -14,7 +14,7 @@ urlpatterns = [
     path('admin/upgrade/requests/', ListUpgradeRequestsView.as_view(), name='list-upgrade-requests'),
     path('fund/webhook/', MonnifyWebhookView.as_view(), name='monnify-webhook'),
     path('fund/wallet/', GenerateMonnifyPaymentLink.as_view(), name='fund-wallet'),
-    path('/transfer/webhook/', MonnifyOutTransferWebhook.as_view(), name='monnify-out-transfer-webhook'),
+    path('transfer/webhook/', MonnifyOutTransferWebhook.as_view(), name='monnify-out-transfer-webhook'),
     path('otp/verify/<str:reference>/', ApproveTransferOTPView.as_view(), name="otp-verification-for-external-transfer"),
     path('transactions/', UserTransactionsView.as_view(), name='user-transactions'),
 ]
