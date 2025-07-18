@@ -186,7 +186,7 @@ class SendMoneyView(APIView):
             if not bank_name:
                 return Response({"error": "Bank name is required for external transfers."}, status=400)
 
-            bank_code = get_bank_code(bank_name)
+            bank_code, bank_title, recipient_name= get_bank_code(bank_name, destination_account_number)
             if not bank_code:
                 return Response({"error": f"Bank code for '{bank_name}' not found."}, status=400)
 
@@ -197,13 +197,13 @@ class SendMoneyView(APIView):
                 Transaction.objects.create(
                     user=sender,
                     sender_name=f"{sender.firstname} {sender.lastname}",
-                    recipient_name=f"{bank_name} {destination_account_number}",
+                    recipient_name=recipient_name.title() if recipient_name else bank_title,
                     transfer_type='external',
                     amount=amount,
                     status='pending',
                     source_account_number=sender_wallet.monnify_account_number,
                     destination_account_number=destination_account_number,
-                    bank_name=bank_name,
+                    bank_name=bank_title,
                     description=description,
                     transaction_reference=reference
                 )
@@ -223,7 +223,6 @@ class SendMoneyView(APIView):
                 )
             return Response({"error": "External transfers not supported in this version."}, status=400)
 
-        # Fallback for any unexpected code path
 class RequestTierUpgradeView(generics.CreateAPIView):
     serializer_class = TierUpgradeSerializer
     permission_classes = [IsAuthenticated]
