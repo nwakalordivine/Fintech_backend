@@ -58,5 +58,4 @@ def initiate_transfer(amount, reference, bank_name, description, destination, ba
         json=payload,
         headers=headers
     )
-    print(response.json())
     return response
