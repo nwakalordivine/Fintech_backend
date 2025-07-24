@@ -1,6 +1,7 @@
 import requests
 import base64
 from django.conf import settings
+# Utility functions for Monnify API interactions
 
 def get_monnify_token():
     api_key = settings.MONNIFY_API_KEY

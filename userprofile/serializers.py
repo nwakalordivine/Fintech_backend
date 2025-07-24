@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Address
 
+# Serializer for Address model
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address

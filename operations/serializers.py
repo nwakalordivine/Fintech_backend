@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from decimal import Decimal
 User = get_user_model()
 
+# Serializer for Transfer Operation
 class TransferSerializer(serializers.Serializer):
     recipient_account_number = serializers.CharField()
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
@@ -50,6 +51,7 @@ class TransferSerializer(serializers.Serializer):
 
         return data
     
+# Serializer for Tier Upgrade Requests
 class TierUpgradeSerializer(serializers.ModelSerializer):
     id_document_file = serializers.FileField(write_only=True, required=False)
     utility_bill_file = serializers.FileField(write_only=True, required=False)
@@ -128,6 +130,7 @@ class TierUpgradeSerializer(serializers.ModelSerializer):
         return TierUpgradeRequest.objects.create(user=user, **validated_data)
     
 
+# Serializer for Funding Wallet
 class FundWalletSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
@@ -136,6 +139,7 @@ class FundWalletSerializer(serializers.Serializer):
             raise serializers.ValidationError("Amount must be greater than Ten.")
         return value
 
+# Serializer for Monnify Fund Webhook
 class MonnifyFundWebhookSerializer(serializers.Serializer):
     eventType = serializers.CharField()
     eventData = serializers.DictField()
@@ -148,6 +152,7 @@ class MonnifyFundWebhookSerializer(serializers.Serializer):
             raise serializers.ValidationError(f"Missing fields in eventData: {missing}")
         return data
    
+# Serializer for OTP Authorization
 class OtpAuthorizeSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, min_length=6, required=True)
 
@@ -156,10 +161,12 @@ class OtpAuthorizeSerializer(serializers.Serializer):
             raise serializers.ValidationError("OTP must be a 6-digit number.")
         return value
 
+# Serializer for Monnify Send Webhook
 class MonnifySendWebhookSerializer(serializers.Serializer):
     eventType = serializers.CharField()
     eventData = serializers.DictField()
 
+# Serializer for Tier Approval Action
 class TierApprovalActionSerializer(serializers.Serializer):
     action = serializers.ChoiceField(choices=['approve', 'reject'])
     reason = serializers.CharField(required=False, allow_blank=True)
@@ -169,6 +176,7 @@ class TierApprovalActionSerializer(serializers.Serializer):
             raise serializers.ValidationError({"reason": "Reason is required when rejecting."})
         return data
 
+# Serializer for Transaction
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction

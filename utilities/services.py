@@ -9,6 +9,9 @@ from auth_system.redis_client import redis
 from utilities.monnify_helper import get_monnify_token
 import requests
 from operations.models import DailyLimitTracker
+
+# Utility functions for user operations
+
 def generate_verification_code():
     return str(random.randint(1000, 9999))
 

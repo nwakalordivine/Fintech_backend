@@ -22,7 +22,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 
 # Create your views here.
-
+## Permissions 
 class IsAdmin(BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_admin
@@ -96,6 +96,8 @@ class MonnifyOutTransferWebhook(APIView):
         ),
     },
 )
+
+# Transfer OTP Endpoint
 class ApproveTransferOTPView(APIView):
     serializer_class = OtpAuthorizeSerializer
     permission_classes = [IsAuthenticated]
@@ -152,6 +154,8 @@ class ApproveTransferOTPView(APIView):
         ),
     },
 )
+
+# Send Money Endpoint
 class SendMoneyView(APIView):
     serializer_class = TransferSerializer
     permission_classes = [IsAuthenticated]
@@ -276,6 +280,7 @@ class SendMoneyView(APIView):
                 )
             return Response({"error": "External transfers not supported in this version."}, status=400)
 
+# Request Tier Upgrade Endpoint
 class RequestTierUpgradeView(generics.CreateAPIView):
     serializer_class = TierUpgradeSerializer
     permission_classes = [IsAuthenticated]
@@ -287,6 +292,7 @@ class RequestTierUpgradeView(generics.CreateAPIView):
             raise serializers.ValidationError("You already have a pending upgrade request.")
         serializer.save()
 
+# Admin - Approve Tier Upgrade Endpoint
 class ApproveTierUpgradeView(generics.UpdateAPIView):
     queryset = TierUpgradeRequest.objects.all()
     serializer_class = TierApprovalActionSerializer
@@ -319,7 +325,7 @@ class ApproveTierUpgradeView(generics.UpdateAPIView):
 
         return Response({"message": f"Request {action}d successfully."})
 
-
+# Admin - List Upgrade Requests Endpoint
 class ListUpgradeRequestsView(generics.ListAPIView):
     queryset = TierUpgradeRequest.objects.all().order_by('-submitted_at')
     serializer_class = TierUpgradeSerializer
@@ -354,6 +360,8 @@ class ListUpgradeRequestsView(generics.ListAPIView):
         ),
     },
 )
+
+# Generate Fund Payment Link - Endpoint
 class GenerateMonnifyPaymentLink(APIView):
     serializer_class = FundWalletSerializer
     permission_classes = [IsAuthenticated]
@@ -415,6 +423,8 @@ class GenerateMonnifyPaymentLink(APIView):
         return Response(response.json(), status=response.status_code)
     
 @method_decorator(csrf_exempt, name='dispatch')
+
+# Monnify Webhook View for Fund Transactions
 class MonnifyWebhookView(APIView):
     serializer_class = MonnifyFundWebhookSerializer
     authentication_classes = []
@@ -460,6 +470,7 @@ class MonnifyWebhookView(APIView):
         except Transaction.DoesNotExist:
             return Response({"error": "Transaction not found."}, status=404)
 
+# User Transactions View
 class UserTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer

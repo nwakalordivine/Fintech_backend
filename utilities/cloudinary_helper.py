@@ -1,6 +1,7 @@
 import cloudinary.uploader
 import cloudinary
 
+# Utility function to upload files to Cloudinary
 def upload_to_cloudinary(file, folder_name="fintechapp_user_uploads"):
     """
     Uploads an image to Cloudinary in the specified folder and returns the URL.

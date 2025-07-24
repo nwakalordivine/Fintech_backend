@@ -8,10 +8,16 @@ from utilities import services
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from rest_framework.permissions import IsAuthenticated
 
+# Permissions
 class IsOwnerOrAdmin(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj == request.user or request.user.is_admin
     
+# Home
+class HomeView(APIView):
+    def get(self, request):
+        return Response({"message": "Welcome to the Fintech API!"}, status=status.HTTP_200_OK)
+
 @extend_schema(
     summary="Register a new user",
     description="Creates a new user account. Returns user details and JWT tokens.",
@@ -50,6 +56,7 @@ class IsOwnerOrAdmin(permissions.BasePermission):
         ),
     },
 )
+# Sign up Endpoint
 class RegisterCreateView(generics.GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
@@ -129,6 +136,8 @@ class RegisterCreateView(generics.GenericAPIView):
         ),
     },
 )
+
+# Password Reset Endpoint
 class PasswordResetView(APIView):
     serializer_class = PasswordResetSerializer
 
@@ -199,6 +208,8 @@ class PasswordResetView(APIView):
         ),
     },
 )
+
+# Password Reset Confirm Endpoint
 class PasswordResetConfirmView(APIView):
     serializer_class = PasswordResetConfirmSerializer
 
@@ -287,6 +298,8 @@ class PasswordResetConfirmView(APIView):
         ),
     },
 )
+
+# Userprofile Update Endpoint
 class UserUpdateView(generics.UpdateAPIView):
     serializer_class = UserUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -319,6 +332,8 @@ class UserUpdateView(generics.UpdateAPIView):
         ),
     },
 )
+
+# UserProfile View Endpoint
 class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsOwnerOrAdmin]
@@ -350,6 +365,8 @@ class UserProfileView(generics.RetrieveAPIView):
         ),
     },
 )
+
+# WalletView Endpoint
 class WalletView(generics.RetrieveAPIView):
     queryset = Wallet
     serializer_class = WalletSerializer
