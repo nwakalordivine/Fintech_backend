@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from utilities.cloudinary_helper import upload_to_cloudinary
 from datetime import date
+from .models import Wallet
 
 CustomUser = get_user_model()
 
@@ -159,3 +160,11 @@ class TokenResponseSerializer(serializers.Serializer):
 
 class ErrorResponseSerializer(serializers.Serializer):
     error = serializers.CharField()
+
+class WalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wallet
+        fields = [
+            "id", "user", "balance", "monnify_account_number", "monnify_bank_name", "bank_user_name", "tier", "accountreference"
+        ]
+        read_only_fields = ["id", "user", "balance", "monnify_account_number", "monnify_bank_name", "bank_user_name", "tier", "accountreference"]

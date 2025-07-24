@@ -18,6 +18,8 @@ from decimal import Decimal
 from utilities.monnify_helper import get_monnify_token, get_bank_code, initiate_transfer
 from utilities.services import handle_monnify_response
 from auth_system.models import Wallet
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 
 # Create your views here.
 
@@ -69,6 +71,31 @@ class MonnifyOutTransferWebhook(APIView):
         except Transaction.DoesNotExist:
             return Response({"error": "Transaction not found."}, status=404)
 
+@extend_schema(
+    summary="Approve transfer OTP",
+    description="Verifies OTP for Monnify transfer authorization.",
+    request=OtpAuthorizeSerializer,
+    responses={
+        200: OpenApiResponse(
+            response=OpenApiTypes.OBJECT,
+            description="OTP approved.",
+            examples=[OpenApiExample(
+                "OTP approved",
+                value={"message": "OTP approved. Await webhook for transaction update."},
+                summary="Success"
+            )]
+        ),
+        400: OpenApiResponse(
+            response=OpenApiTypes.OBJECT,
+            description="OTP verification failed.",
+            examples=[OpenApiExample(
+                "OTP failed",
+                value={"error": "OTP verification failed.", "monnify_response": {"requestSuccessful": False}},
+                summary="Failure"
+            )]
+        ),
+    },
+)
 class ApproveTransferOTPView(APIView):
     serializer_class = OtpAuthorizeSerializer
     permission_classes = [IsAuthenticated]
@@ -94,11 +121,37 @@ class ApproveTransferOTPView(APIView):
 
         if data.get("requestSuccessful"):
             return Response({"message": "OTP approved. Await webhook for transaction update."}, status=200)
-        return Response({
-            "error": "OTP verification failed.",
-            "monnify_response": data
-        }, status=400)
+        return Response({"error": "OTP verification failed.", "monnify_response": data}, status=400)
 
+@extend_schema(
+    summary="Send money (internal/external)",
+    description="Transfers money to another user or external bank account, enforcing all business rules.",
+    request=TransferSerializer,
+    responses={
+        201: OpenApiResponse(
+            response=OpenApiTypes.OBJECT,
+            description="Transaction successful.",
+            examples=[OpenApiExample(
+                "Success",
+                value={"message": "Transaction successful", "reference": "12345abcde"},
+                summary="Success",
+                response_only=True,
+                request_only=False
+            )]
+        ),
+        400: OpenApiResponse(
+            response=OpenApiTypes.OBJECT,
+            description="Validation error.",
+            examples=[OpenApiExample(
+                "Limit error",
+                value={"error": "Daily outflow limit exceeded."},
+                summary="Limit error",
+                response_only=True,
+                request_only=False
+            )]
+        ),
+    },
+)
 class SendMoneyView(APIView):
     serializer_class = TransferSerializer
     permission_classes = [IsAuthenticated]
@@ -272,6 +325,35 @@ class ListUpgradeRequestsView(generics.ListAPIView):
     serializer_class = TierUpgradeSerializer
     permission_classes = [IsAdmin]
 
+@extend_schema(
+    summary="Generate Monnify payment link",
+    description="Generates a payment link for wallet funding via Monnify.",
+    request=FundWalletSerializer,
+    responses={
+        200: OpenApiResponse(
+            response=OpenApiTypes.OBJECT,
+            description="Payment link generated.",
+            examples=[OpenApiExample(
+                "Success",
+                value={"payment_link": "https://checkout.monnify.com/xyz", "payment_reference": "abc123"},
+                summary="Success",
+                response_only=True,
+                request_only=False
+            )]
+        ),
+        400: OpenApiResponse(
+            response=OpenApiTypes.OBJECT,
+            description="Validation error.",
+            examples=[OpenApiExample(
+                "Limit error",
+                value={"error": "Daily Inflow limit exceeded."},
+                summary="Limit error",
+                response_only=True,
+                request_only=False
+            )]
+        ),
+    },
+)
 class GenerateMonnifyPaymentLink(APIView):
     serializer_class = FundWalletSerializer
     permission_classes = [IsAuthenticated]
@@ -382,6 +464,29 @@ class UserTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
 
+    @extend_schema(
+    summary="List user transactions",
+    description="Returns a list of transactions for the authenticated user.",
+    responses={
+        200: OpenApiResponse(
+            response=TransactionSerializer,
+            description="List of transactions.",
+            examples=[OpenApiExample(
+                "Transaction list",
+                value=[
+                    {
+                        "id": 1,
+                        "amount": "1000.00",
+                        "status": "success",
+                        "transaction_type": "Debit",
+                        "created_at": "2025-07-21T12:00:00Z"
+                    }
+                ],
+                summary="Transactions"
+            )]
+        ),
+    },
+)
     def get(self, request):
         user = request.user
         sent_transactions = Transaction.objects.filter(user=user).order_by('-created_at')
