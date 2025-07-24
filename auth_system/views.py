@@ -13,10 +13,6 @@ class IsOwnerOrAdmin(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj == request.user or request.user.is_admin
     
-# Home
-class HomeView(APIView):
-    def get(self, request):
-        return Response({"message": "Welcome to the Fintech API!"}, status=status.HTTP_200_OK)
 
 @extend_schema(
     summary="Register a new user",
