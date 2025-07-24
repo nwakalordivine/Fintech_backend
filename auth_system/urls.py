@@ -12,5 +12,5 @@ urlpatterns = [
     path('api/profile/update/', views.UserUpdateView.as_view(), name='profile-update'),
     path('api/profile/', views.UserProfileView.as_view(), name='user-profile'),
     path('api/user/wallet/', views.WalletView.as_view(), name="user_wallet_details"),
-    path('/', views.HomeView.as_view(), name='home-view'),
+    path('', views.HomeView.as_view(), name='home-view'),
 ]
