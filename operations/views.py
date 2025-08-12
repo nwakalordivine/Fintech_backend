@@ -44,6 +44,7 @@ class MonnifyOutTransferWebhook(APIView):
         try:
             deposit = Transaction.objects.get(transaction_reference=transaction_ref)
 
+            # Webhook idempotency check
             if deposit.status != "pending":
                 return Response({"message": "Already processed."}, status=200)
 

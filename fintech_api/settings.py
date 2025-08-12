@@ -208,7 +208,10 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API documentation for Fintech project',
     'VERSION': '1.0.0',
     'CONTACT': {'email': 'your@email.com'},
-    "SERVE_INCLUDE_SCHEMA": False
+    "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "RequestedTierEnum": "RequestedTierEnum"
+    },
 }
 
 MONNIFY_API_KEY = os.getenv("MONNIFY_API_KEY")
